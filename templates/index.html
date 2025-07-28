@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dice Statistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+</head>
+<body style="font-family:sans-serif;">
+  <h1>🎲 최신 주사위 값: {{ latest_face }}</h1>
+  <p>굴린 시간: {{ latest_time }}</p>
+
+  <hr>
+
+  <h2>📊 오늘의 통계</h2>
+  <canvas id="dailyChart"></canvas>
+
+  <h2>📊 이번 달의 통계</h2>
+  <canvas id="monthlyChart"></canvas>
+
+  <h2>📊 전체 통계</h2>
+  <canvas id="totalChart"></canvas>
+
+  <script>
+    const labels = ["1", "2", "3", "4", "5", "6"];
+
+    function drawChart(id, data, title) {
+      new Chart(document.getElementById(id), {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: title,
+            data: data,
+            backgroundColor: 'skyblue',
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    drawChart("dailyChart", Object.values({{ daily|tojson }}), "오늘");
+    drawChart("monthlyChart", Object.values({{ monthly|tojson }}), "이번 달");
+    drawChart("totalChart", Object.values({{ total|tojson }}), "전체");
+  </script>
+</body>
+</html>
