@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+from datetime import datetime
 import sqlite3
 
 app = Flask(__name__)
@@ -26,18 +27,22 @@ def index():
             stats[str(face)] = count
         return stats
 
+    today = str(datetime.today()).split(" ")[0]
     daily = get_stats("SELECT face, count FROM daily_counts WHERE date = DATE('now','localtime')")
     monthly = get_stats("SELECT face, count FROM monthly_counts WHERE yyyymm = STRFTIME('%Y-%m','now','localtime')")
     total = get_stats("SELECT face, count FROM total_counts")
+    total_count = sum(total.values())
 
     con.close()
 
     return render_template("index.html",
                            latest_face=latest_face,
                            latest_time=latest_time,
+                           today=today,
                            daily=daily,
                            monthly=monthly,
-                           total=total)
+                           total=total,
+                           total_count=total_count)
 
 if __name__ == '__main__':
     app.run(debug=True)

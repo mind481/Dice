@@ -40,7 +40,7 @@ def play_sound(key):
 
 def pre_processing(frame):
     # HSV 색상 범위 설정 (파란색)
-    lower_blue = np.array([90, 50, 50])
+    lower_blue = np.array([90, 90, 90])
     upper_blue = np.array([200, 255, 255])
 
     # 주사위 인식 범위 제한    

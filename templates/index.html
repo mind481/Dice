@@ -1,49 +1,233 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>Dice Statistics</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
-</head>
-<body style="font-family:sans-serif;">
-  <h1>🎲 최신 주사위 값: {{ latest_face }}</h1>
-  <p>굴린 시간: {{ latest_time }}</p>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
 
-  <hr>
-
-  <h2>📊 오늘의 통계</h2>
-  <canvas id="dailyChart"></canvas>
-
-  <h2>📊 이번 달의 통계</h2>
-  <canvas id="monthlyChart"></canvas>
-
-  <h2>📊 전체 통계</h2>
-  <canvas id="totalChart"></canvas>
-
-  <script>
-    const labels = ["1", "2", "3", "4", "5", "6"];
-
-    function drawChart(id, data, title) {
-      new Chart(document.getElementById(id), {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: title,
-            data: data,
-            backgroundColor: 'skyblue',
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true } }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: auto;
         }
-      });
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: #000000;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #aaaaaa;
+            margin-top: 10px;
+            border: 1px solid #555;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        .chart-section {
+            background-color: rgba(34, 34, 34, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-section h2 {
+            text-align: center;
+            font-size: 1.5em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .total-stats {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.2em;
+            color: #c0c0c0;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        .chart-slideshow {
+            position: relative;
+            height: 400px; /* 필요시 조정 */
+            overflow: hidden;
+        }
+
+        .chart-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            transition: opacity 1s ease;
+            opacity: 0;
+            z-index: 0;
+        }
+
+        .chart-slide.active {
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .latest-face-box {
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            background-color: rgba(0, 255, 255, 0.1);
+            color: #00ffff;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <div class="header">
+        <h1>던져봐! 어떤 숫자가 나올까?</h1>
+        <p>{{ today }}</p>
+    </div>
+
+    <div class="latest-face-box">
+        🎲 마지막 주사위 눈: <span>{{ latest_face }}</span>
+    </div>
+
+    <div class="chart-slideshow">
+        <div class="chart-slide">
+            <h2 class="chart-title">📊 오늘의 통계</h2>
+            <canvas id="dailyChart"></canvas>
+        </div>
+        <div class="chart-slide">
+            <h2 class="chart-title">📊 이번 달의 통계</h2>
+            <canvas id="monthlyChart"></canvas>
+        </div>
+        <div class="chart-slide">
+            <h2 class="chart-title">📊 전체 통계</h2>
+            <canvas id="totalChart"></canvas>
+        </div>
+    </div>
+
+    <div class="footer">
+        총 {{ total_count }} 개의 주사위를 굴렸어요!
+    </div>
+</div>
+
+<script>   
+    const labels = ["1", "2", "3", "4", "5", "6"];
+    // 통계 (바 차트) 렌더링
+    function drawChart(id, data, title) {
+        new Chart(document.getElementById(id), {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    backgroundColor: (context) => {
+                        const label = context.chart.data.labels[context.dataIndex];
+                        return label == {{ latest_face }} ? 'rgba(255, 215, 0, 0.8)' : 'rgba(75, 192, 192, 0.6)';
+                    },
+                    borderColor: (context) => {
+                        const label = context.chart.data.labels[context.dataIndex];
+                        return label == {{ latest_face }} ? 'rgba(255, 215, 0, 1)' : 'rgba(75, 192, 192, 1)';
+                    },
+                    borderWidth: 2,
+                    borderRadius: 5,
+                    barPercentage: 0.6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false // 범례 숨기기
+                    },
+                    tooltip: {
+                        enabled: false // 툴팁 숨기기
+                    },
+                    datalabels: {
+                        anchor: 'end',
+                        align: 'end',
+                        color: '#fff',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        },
+                        formatter: function(value) {
+                            return value;
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeInOutQuart'
+                }
+            },
+            plugins: [ChartDataLabels] // Chart.js 데이터 레이블 플러그인 추가
+        });
     }
 
     drawChart("dailyChart", Object.values({{ daily|tojson }}), "오늘");
     drawChart("monthlyChart", Object.values({{ monthly|tojson }}), "이번 달");
     drawChart("totalChart", Object.values({{ total|tojson }}), "전체");
-  </script>
+
+    const slides = document.querySelectorAll(".chart-slide");
+    let currentIndex = 0;
+
+    function showSlide(index) {
+        slides.forEach((slide, i) => {
+            slide.classList.remove("active");
+            if (i === index) {
+                slide.classList.add("active");
+            }
+        });
+    }
+
+    // 초기 표시
+    showSlide(currentIndex);
+
+    // 3초마다 슬라이드 전환
+    setInterval(() => {
+        currentIndex = (currentIndex + 1) % slides.length;
+        showSlide(currentIndex);
+    }, 3000);
+</script>
 </body>
 </html>
