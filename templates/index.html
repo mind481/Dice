@@ -162,11 +162,11 @@
                     data: data,
                     backgroundColor: (context) => {
                         const label = context.chart.data.labels[context.dataIndex];
-                        return label == {{ latest_face }} ? 'rgba(255, 215, 0, 0.8)' : 'rgba(75, 192, 192, 0.6)';
+                        return label === "{{ latest_face }}" ? 'rgba(255, 215, 0, 0.8)' : 'rgba(75, 192, 192, 0.6)';
                     },
                     borderColor: (context) => {
                         const label = context.chart.data.labels[context.dataIndex];
-                        return label == {{ latest_face }} ? 'rgba(255, 215, 0, 1)' : 'rgba(75, 192, 192, 1)';
+                        return label === "{{ latest_face }}" ? 'rgba(255, 215, 0, 1)' : 'rgba(75, 192, 192, 1)';
                     },
                     borderWidth: 2,
                     borderRadius: 5,
@@ -228,6 +228,18 @@
         currentIndex = (currentIndex + 1) % slides.length;
         showSlide(currentIndex);
     }, 3000);
+
+    const eventSource = new EventSource("/events");
+
+    eventSource.onmessage = function(event) {
+        console.log("변경 감지됨:", event.data);
+        location.reload();  // 새로운 데이터 수신 시 새로고침
+    };
+
+    eventSource.onerror = function(error) {
+        console.error("SSE 오류 발생:", error);
+        // 에러 발생 시 재연결을 시도하거나 대체 로직 수행 가능
+    };
 </script>
 </body>
 </html>
