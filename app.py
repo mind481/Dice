@@ -28,6 +28,17 @@ def get_stats(cur, query):
         stats[str(face)] = count
     return stats
 
+def get_daily_visitors(cur):
+    cur.execute("""
+        SELECT date, SUM(count) as total_count
+        FROM daily_counts
+        GROUP BY date
+        ORDER BY date
+        LIMIT 7
+    """)
+    result = cur.fetchall()
+    return result
+
 def event_stream():
     con = get_db()
     cur = get_cursor(con)
@@ -53,6 +64,7 @@ def index():
     monthly = get_stats(cur, "SELECT face, count FROM monthly_counts WHERE yyyymm = STRFTIME('%Y-%m','now','localtime')")
     total = get_stats(cur, "SELECT face, count FROM total_counts")
     total_count = sum(total.values())
+    daily_visitors = get_daily_visitors(cur)
 
     con.close()
 
@@ -63,7 +75,8 @@ def index():
                            daily=daily,
                            monthly=monthly,
                            total=total,
-                           total_count=total_count)
+                           total_count=total_count,
+                           daily_visitors=daily_visitors)
         
 @app.route('/events')
 def sse():

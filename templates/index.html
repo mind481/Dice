@@ -115,6 +115,19 @@
             border-radius: 15px;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
         }
+
+        .chart-curve {
+            position: relative;
+            height: 400px; /* 필요시 조정 */
+            overflow: hidden;
+            margin-top : 20px;
+        }
+
+        .chart-label {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #00ffff;
+        }
     </style>
 </head>
 <body>
@@ -142,6 +155,10 @@
             <h2 class="chart-title">📊 전체 통계</h2>
             <canvas id="totalChart"></canvas>
         </div>
+    </div>
+
+    <div class="chart-curve">
+        <canvas id="curveChart"></canvas>
     </div>
 
     <div class="footer">
@@ -204,9 +221,45 @@
         });
     }
 
+    function curveChart(id, label, data, title) {
+        new Chart(document.getElementById(id), {
+            type: 'line',
+            data: {
+                labels: label,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    borderColor: 'rgba(0, 255, 255, 0.8)',
+                    backgroundColor: 'rgba(0, 255, 255, 0.2)',
+                    tension: 0.4, // 🔹곡선 정도 설정 (0 = 꺾임, 1 = 완전 곡선)
+                    fill: true,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#00ffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+
     drawChart("dailyChart", Object.values({{ daily|tojson }}), "오늘");
     drawChart("monthlyChart", Object.values({{ monthly|tojson }}), "이번 달");
     drawChart("totalChart", Object.values({{ total|tojson }}), "전체");
+
+    const dailyLabels = {{ daily_visitors | map(attribute=0) | list | tojson }};
+    const dailyData = {{ daily_visitors | map(attribute=1) | list | tojson }};
+    curveChart("curveChart", dailyLabels, dailyData, "방문자 수");
 
     const slides = document.querySelectorAll(".chart-slide");
     let currentIndex = 0;
