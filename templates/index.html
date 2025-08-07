@@ -31,25 +31,15 @@
         }
 
         .header {
-            text-align: center;
             margin-bottom: 30px;
         }
 
         .header h1 {
+            text-align: center;
             font-size: 2.5em;
             font-weight: 700;
             margin: 0;
             letter-spacing: 2px;
-        }
-
-        .header p {
-            font-size: 1.2em;
-            color: #aaaaaa;
-            margin-top: 10px;
-            border: 1px solid #555;
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
         }
 
         .chart-section {
@@ -77,9 +67,22 @@
         .footer {
             text-align: center;
             margin-top: 30px;
+        }
+
+        .footer h1{
             font-size: 1.3em;
             font-weight: bold;
             color: #00ffff;
+        }
+
+        .footer p {
+            font-size: 1.2em;
+            color: #aaaaaa;
+            margin-top: 10px;
+            border: 1px solid #555;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
         }
 
         .chart-slideshow {
@@ -135,7 +138,6 @@
 <div class="dashboard-container">
     <div class="header">
         <h1>던져봐! 어떤 숫자가 나올까?</h1>
-        <p>{{ today }}</p>
     </div>
 
     <div class="latest-face-box">
@@ -158,13 +160,14 @@
     </div>
 
     <div class="footer">
-        총 {{ total_count }} 개의 주사위를 굴렸어요!
+        <h1>총 {{ total_count }} 개의 주사위를 굴렸어요!</h1>
+        <p>{{ today }}</p>
     </div>
 </div>
 
 <script>   
     const labels = ["1", "2", "3", "4", "5", "6"];
-    // 통계 (바 차트) 렌더링
+        // 통계 (바 차트) 렌더링
     function drawChart(id, data, title) {
         new Chart(document.getElementById(id), {
             type: 'bar',
@@ -184,7 +187,7 @@
                     borderWidth: 2,
                     borderRadius: 5,
                     barPercentage: 0.6,
-                }]
+                                    }]
             },
             options: {
                 responsive: true,
