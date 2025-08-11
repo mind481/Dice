@@ -1,315 +1,408 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&display=swap');
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: auto;
-        }
+<title>던져봐! 어떤 숫자가 나올까?</title>
+<style>
+  @font-face {
+    font-family: 'GmarketSansMedium';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'GongGothicLight';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.0/GongGothicLight.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'KBO-Dia-Gothic_bold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/KBO-Dia-Gothic_bold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+  }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #000; color:#fff; font-family: 'GongGothicLight', sans-serif;
+    display:flex; justify-content:center; align-items:center;
+  }
+  .wrapper{
+    width:100%;
+    max-width: calc(100vh * 9 / 16);
+    aspect-ratio: 9 / 16;
+    display:flex; flex-direction:column;
+    padding:20px; box-sizing:border-box; background:#000;
+    position: relative;
+  }
+  /* 상단 로고/날짜 */
+  .brand { position:absolute; top:16px; left:20px; font-size:14px; line-height:1.2; opacity:.9;}
+  .date-top { position:absolute; top:16px; right:20px; font-size:16px; opacity:.9;}
 
-        .dashboard-container {
-            width: 100%;
-            max-width: 800px;
-            background-color: #000000;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+  /* 제목(스샷 느낌 – 첫 줄 살짝 기울임) */
+  .title-wrap{ margin-top:60px; text-align:center;}
+  .title-line1{ display:inline-block; font-size:30px; font-weight:300; transform: rotate(-12deg); }
+  .title-line2{ display:block; font-size:30px; font-weight:300; margin-top:8px; }
 
-        .header {
-            margin-bottom: 30px;
-        }
+  /* 그래프 영역 */
+  .stage{ flex:1; display:flex; flex-direction:column; align-items:center; }
+  /* 그래프 위/아래 여백 조정 */
+  .chart-block{ width:100%; margin-top:24px; }
 
-        .header h1 {
-            text-align: center;
-            font-size: 2.5em;
-            font-weight: 700;
-            margin: 0;
-            letter-spacing: 2px;
-        }
+  .chart{
+    height: 300px; /* 막대 전체 높이 고정 */
+    display:flex; justify-content:center; align-items:stretch;
+    gap:22px; width:100%;
+    position: relative; /* 가상요소/라벨 기준 */
+  }
 
-        .chart-section {
-            background-color: rgba(34, 34, 34, 0.8);
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 30px;
-        }
-        
-        .chart-section h2 {
-            text-align: center;
-            font-size: 1.5em;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-weight: 400;
-        }
+  /* 분모 + 점선 */
+  .chart::before {
+    content:"";
+    position:absolute;
+    left:20px; right:20px;
+    top:70%; /* 선의 높이 (백분율로 조절 가능) */
+    border-top:1px dashed #ffd54f; /* 색/형태 조절 */
+    pointer-events:none;
+  }
+  .chart::after {
+    content:"⅙";
+    position:absolute;
+    top:70%;
+    left:0px; /* 막대 영역 바깥으로 빼기 */
+    transform:translateY(-50%);
+    color:#ffd54f;
+    font-size:14px;
+  }
 
-        .total-stats {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 1.2em;
-            color: #c0c0c0;
-        }
+  /* 막대+라벨 한 컬럼 */
+  .bar-col{
+    --barW: clamp(42px, 7vw, 42px);
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:flex-end;
+    height:100%;
+    gap:8px;
+  }
 
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-        }
+  .bar{
+    width: var(--barW);
+    height:100%;
+    background: rgba(200,200,200,0.25); /* 반투명 회색 */
+    border-radius:20px; position:relative; overflow:hidden;
+    transition: box-shadow .3s ease;
+  }
+  .bar-fill{
+    position:absolute; left:0; bottom:0; width:100%;
+    height:0; /* 초기 높이 0% */
+    background: linear-gradient( #ffffff 50%, rgba(255, 255, 255, 0.6) 100%);
+    border-radius:20px;
+    transition: height 1s ease-out;
+    will-change: height;
+  }
+  .bar.yellow .bar-fill{ background: linear-gradient(to bottom, #ffd54f 0%, #ffffff 60%); }
 
-        .footer h1{
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #00ffff;
-        }
+  /* 퍼센트: bar-fill 상단을 따라다님 */
+  .bar-fill .percent {
+    position:absolute;
+    top: -6px;               /* 꼭대기 살짝 위 */
+    left: 50%;
+    transform: translate(-50%, -100%);
+    color:#fff; font-weight:700; font-size:12px; white-space:nowrap;
+    text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  }
 
-        .footer p {
-            font-size: 1.2em;
-            color: #aaaaaa;
-            margin-top: 10px;
-            border: 1px solid #555;
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 20px;
-        }
+  /* 막대 아래 라벨(주사위) */
+  .bar-label{
+    width: var(--barW);
+    text-align: center;
+    font-size: calc(var(--barW) * 0.9);
+    line-height: 1;
+  }
 
-        .chart-slideshow {
-            position: relative;
-            height: 400px; /* 필요시 조정 */
-            overflow: hidden;
-        }
+  /* 페이저 도트 (그래프 아래, 타이틀 위) */
+  .dots { display:flex; gap:8px; justify-content:center; align-items:center; margin:8px 0 6px; }
+  .dot{ width:8px; height:8px; border-radius:50%; background:#555; }
+  .dot.active{ background:#fff; }
 
-        .chart-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            transition: opacity 1s ease;
-            opacity: 0;
-            z-index: 0;
-        }
+  /* 그래프 타이틀 */
+  #chartTitle{ text-align:center; font-size:18px; font-weight:300; margin-bottom:18px; }
 
-        .chart-slide.active {
-            opacity: 1;
-            z-index: 1;
-        }
+  /* 설명 카드 */
+  .desc {
+    width: 400px;
+    height: 160px;
+    background: #222;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 8px;
+    line-height: 1.6;
+    box-sizing: border-box;
+    position: relative;
+    text-align: center;
+    font-size: 12px;
+    color: rgb(149, 171, 219);
+  }
+  .desc strong {
+    font-size: 18px;    /* 제목 크기 */
+  }
 
-        .latest-face-box {
-            text-align: center;
-            font-size: 1.5em;
-            font-weight: bold;
-            background-color: rgba(0, 255, 255, 0.1);
-            color: #00ffff;
-            padding: 12px 20px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 15px;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-        }
+  /* 설명 카드 아래 작은 도트 */
+  .desc-dots{ display:flex; gap:8px; justify-content:center; align-items:center; margin:8px 0 6px; }
+  .desc-dot{ width:6px; height:6px; border-radius:50%; background:#555; }
+  .desc-dot.active{ background:#fff; }
 
-        .total-chart {
-            position: relative;
-            height: 400px; /* 필요시 조정 */
-            overflow: hidden;
-            margin-top : 20px;
-        }
+  /* 하단 통계 3개 (스샷 배치) */
+  .stats-wrap{ margin-top:28px; text-align:center; }
+  .stats-title{ font-size:18px; margin-bottom:14px; }
+  .stats{ display:flex; justify-content:space-around; margin-top:6px; }
+  .stat{ text-align:center; }
+  .stat .num{ font-size:40px; font-weight:500; font-style: italic;}
+  .stat .lbl{ margin-top:6px; color:#a8c2e8; font-style:italic; }
 
-        .chart-label {
-            margin-top: 20px;
-            font-size: 1.2em;
-            color: #00ffff;
-        }
-    </style>
+  /* 강조(반짝) 효과 */
+  @keyframes highlightFlash{
+    0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0); }
+    50%{ box-shadow:0 0 22px rgba(255,255,0,.95); }
+  }
+  .highlight{ animation: highlightFlash 1s ease-in-out 3; }
+</style>
 </head>
+
 <body>
+  <div class="wrapper">
 
-<div class="dashboard-container">
-    <div class="header">
-        <h1>던져봐! 어떤 숫자가 나올까?</h1>
+    <div class="brand">국립중앙과학관<br/><span style="font-size:11px; opacity:.8;">NATIONAL SCIENCE MUSEUM</span></div>
+    <div class="date-top" id="dateTop"></div>
+
+    <div class="title-wrap">
+      <span class="title-line1">던져봐!</span>
+      <span class="title-line2">어떤 숫자가 나올까?</span>
     </div>
 
-    <div class="latest-face-box">
-        🎲 마지막 주사위 눈: <span>{{ latest_face }}</span>
-    </div>
-
-    <div class="chart-slideshow">
-        <div class="chart-slide">
-            <h2 class="chart-title">📊 오늘의 통계</h2>
-            <canvas id="dailyChart"></canvas>
+    <div class="stage">
+      <div class="chart-block">
+        <div class="chart" id="chart">
+          <!-- 1 -->
+          <div class="bar-col">
+            <div class="bar">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚀</div>
+          </div>
+          <!-- 2 -->
+          <div class="bar-col">
+            <div class="bar">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚁</div>
+          </div>
+          <!-- 3 -->
+          <div class="bar-col">
+            <div class="bar">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚂</div>
+          </div>
+          <!-- 4 -->
+          <div class="bar-col">
+            <div class="bar">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚃</div>
+          </div>
+          <!-- 5 -->
+          <div class="bar-col">
+            <div class="bar yellow">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚄</div>
+          </div>
+          <!-- 6 -->
+          <div class="bar-col">
+            <div class="bar">
+              <div class="bar-fill"><div class="percent">0%</div></div>
+            </div>
+            <div class="bar-label">⚅</div>
+          </div>
         </div>
-        <div class="chart-slide">
-            <h2 class="chart-title">📊 이번 달의 통계</h2>
-            <canvas id="monthlyChart"></canvas>
+
+        <!-- 그래프 페이저 도트 & 타이틀 -->
+        <div class="dots" id="dots"></div>
+        <h2 id="chartTitle">오늘의 통계</h2>
+      </div>
+
+      <div class="desc" id="desc">
+        <div id="descText"></div>
+        <div class="desc-dots" id="desc-dots"></div>
+      </div>
+    </div>
+
+    <div class="stats-wrap">
+      <div class="stats-title">나는 몇 번째 체험자일까요?</div>
+      <div class="stats">
+        <div class="stat">
+          <div class="num" id="todayCnt">{{daily_count}}</div>
+          <div class="lbl">Today</div>
         </div>
+        <div class="stat">
+          <div class="num" id="monthCnt">{{monthly_count}}</div>
+          <div class="lbl">Monthly</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="totalCnt">{{total_count}}</div>
+          <div class="lbl">Total</div>
+        </div>
+      </div>
     </div>
 
-    <div class="total-chart">
-        <canvas id="totalChart"></canvas>
-    </div>
+  </div>
 
-    <div class="footer">
-        <h1>총 {{ total_count }} 개의 주사위를 굴렸어요!</h1>
-        <p>{{ today }}</p>
-    </div>
-</div>
+<script>
+  // 오늘 날짜 상단 표시
+  (function(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    document.getElementById('dateTop').textContent = `${y}-${m}-${day}`;
+  })();
 
-<script>   
-    const labels = ["1", "2", "3", "4", "5", "6"];
-        // 통계 (바 차트) 렌더링
-    function drawChart(id, data, title) {
-        new Chart(document.getElementById(id), {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: title,
-                    data: data,
-                    backgroundColor: (context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label === "{{ latest_face }}" ? 'rgba(255, 215, 0, 0.8)' : 'rgba(75, 192, 192, 0.6)';
-                    },
-                    borderColor: (context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label === "{{ latest_face }}" ? 'rgba(255, 215, 0, 1)' : 'rgba(75, 192, 192, 1)';
-                    },
-                    borderWidth: 2,
-                    borderRadius: 5,
-                    barPercentage: 0.6,
-                                    }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false // 범례 숨기기
-                    },
-                    tooltip: {
-                        enabled: false // 툴팁 숨기기
-                    },
-                    datalabels: {
-                        anchor: 'center',
-                        clamp: true,
-                        color: '#fff',
-                        font: {
-                            size: 14,
-                            weight: 'bold'
-                        },
-                        formatter: function(value) {
-                            return value;
-                        }
-                    }
-                },
-                animation: {
-                    duration: 1500,
-                    easing: 'easeInOutQuart'
-                }
-            },
-            plugins: [ChartDataLabels] // Chart.js 데이터 레이블 플러그인 추가
-        });
+  // 데이터셋 (title 추가)
+  const chartDatasets = [
+    {
+      title: "오늘의 통계",
+      heights: {{ daily }}
+    },
+    {
+      title: "이번 달의 통계",
+      heights: {{ monthly }}
+    },
+    {
+      title: "전체 통계",
+      heights: {{ total }}
     }
+  ];
 
-    function totalChart(id, totalData, dailyData, title) {
-        new Chart(document.getElementById(id), {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: '전체 통계',
-                    data: totalData,
-                    backgroundColor: 'rgba(0, 255, 255, 0.2)',
-                    tension: 0.4, // 🔹곡선 정도 설정 (0 = 꺾임, 1 = 완전 곡선)
-                    fill: true,
-                    pointRadius: 0
-                },{
-                    label: '오늘 통계',
-                    data: dailyData,
-                    borderColor: 'rgba(0, 255, 255, 0.8)',
-                    tension: 0.4, // 🔹곡선 정도 설정 (0 = 꺾임, 1 = 완전 곡선)
-                    pointRadius: (context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label === "{{ latest_face }}" ? 10 : 4;
-                    },
-                    pointBackgroundColor: (context) => {
-                        const label = context.chart.data.labels[context.dataIndex];
-                        return label === "{{ latest_face }}" ? 'rgba(255, 215, 0, 1)' : 'rgba(75, 192, 192, 1)';
-                    }
-                }]
-            },
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            display: false
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+  const descDatasets = [
+    {
+      title: "큰 수의 법칙",
+      desc: "<strong>큰 수의 법칙</strong>\
+      <br>주사위를 몇 번만 던지면 어떤 숫자가 더 많이 나올 수도 있어요.\
+      <br>그런데 주사위를 백 번, 천 번 던져보면 어떻게 될까요?\
+      <br>놀랍게도! 모든 숫자가 비슷한 횟수로 나오게 돼요.\
+      <br>숫자들이 서로 \"우리도 골고루 나올 차례야~\"하고 줄 서는 것 같죠!"
+    },
+    {
+      title: "도박사의 오류",
+      desc: "<strong>도박사의 오류</strong>\
+      <br>\"계속 1이 나왔으니 이제 6이 나올 차례\"라고 생각하나요?\
+      <br>하지만 주사위는 지난 결과를 기억하지 못해요!\
+      <br>언제든지 1도, 6도, 다시 또 1이 나올 수 있죠.\
+      <br>주사위는 항상 \'무작위\'로 숫자를 골라요. 지난 결과와는 상관 없어요!"
     }
+  ];
 
-    drawChart("dailyChart", Object.values({{ daily|tojson }}), "오늘");
-    drawChart("monthlyChart", Object.values({{ monthly|tojson }}), "이번 달");
-    totalChart("totalChart", Object.values({{ total|tojson }}), Object.values({{ daily|tojson }}), "전체");
+  const chartEl   = document.getElementById('chart');
+  const bars      = chartEl.querySelectorAll('.bar');
+  const fills     = chartEl.querySelectorAll('.bar-fill');
+  const percents  = chartEl.querySelectorAll('.bar-fill .percent');
+  const descEl    = document.getElementById('desc');
+  const titleEl   = document.getElementById('chartTitle');
+  const dotsEl = document.getElementById('dots');
 
-    const slides = document.querySelectorAll(".chart-slide");
-    let currentIndex = 0;
+  const descTextEl = document.getElementById('descText');
+  const descDotsEl = document.getElementById('desc-dots');
+  
+  // 그래프 도트 생성
+  chartDatasets.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0?' active':'');
+    d.dataset.i = i;
+    dotsEl.appendChild(d);
+  });
 
-    function showSlide(index) {
-        slides.forEach((slide, i) => {
-            slide.classList.remove("active");
-            if (i === index) {
-                slide.classList.add("active");
-            }
+  // 설명 도트 생성
+  descDatasets.forEach((_,i)=>{
+    const d = document.createElement('div');
+    d.className = 'desc-dot' + (i===0?' active':'');
+    d.dataset.i = i;
+    descDotsEl.appendChild(d);
+  });
+
+  // 페이지 토글
+  function setChartPager(i){
+    dotsEl.querySelectorAll('.dot')
+      .forEach((el,idx)=> el.classList.toggle('active', idx===i));
+  }
+  function setDescPager(i){
+    descDotsEl.querySelectorAll('.desc-dot')
+      .forEach((el,idx)=> el.classList.toggle('active', idx===i));
+  }
+
+  let idx = 0, highlightTimer = null;
+
+  function forceReflow(el){ void el.offsetHeight; }
+
+  function animateTo(heights){
+    // 0%로 초기화 (아래→위 재생)
+    fills.forEach(f => { f.style.transition = 'none'; f.style.height = '0%'; });
+    percents.forEach(v => v.textContent = '0%');
+    fills.forEach(forceReflow);
+
+    // 다음 프레임부터 목표치로
+    requestAnimationFrame(() => {
+      fills.forEach(f => f.style.transition = 'height 1s ease-out');
+      requestAnimationFrame(() => {
+        const total = heights.reduce((a,b) => a + b, 0);
+        fills.forEach((f,i) => {
+          const h = total > 0? (heights[i] / total * 100) : 0;
+          f.style.height = h + '%';
+          f.querySelector('.percent').textContent = heights[i];
         });
-    }
+      });
+    });
 
-    // 초기 표시
-    showSlide(currentIndex);
+    // 반짝 효과 (노란 막대 5)
+    if (highlightTimer) clearTimeout(highlightTimer);
+    const pick = 4;
+    highlightTimer = setTimeout(() => {
+      bars.forEach(b => b.classList.remove('highlight'));
+      bars[pick].classList.add('highlight');
+    }, 1000);
+  }
 
-    // 5초마다 슬라이드 전환
-    setInterval(() => {
-        currentIndex = (currentIndex + 1) % slides.length;
-        showSlide(currentIndex);
-    }, 5000);
+  function updateChartUI(i){
+    const d = chartDatasets[i];
+    titleEl.textContent = d.title;
+    animateTo(d.heights);
+    setChartPager(i);
+  }
+  function updateDescUI(i){
+    const d = descDatasets[i];
+    descTextEl.innerHTML = d.desc;  // 도트는 건드리지 않음
+    setDescPager(i);
+  }
 
-    const eventSource = new EventSource("/events");
+  // ===== 인덱스/타이머 완전 분리 =====
+  let idxChart = 0;
+  let idxDesc  = 0;
 
-    eventSource.onmessage = function(event) {
-        console.log("변경 감지됨:", event.data);
-        location.reload();  // 새로운 데이터 수신 시 새로고침
-    };
+  function tickChart(){
+    idxChart = (idxChart + 1) % chartDatasets.length;
+    updateChartUI(idxChart);
+  }
+  function tickDesc(){
+    idxDesc = (idxDesc + 1) % descDatasets.length;
+    updateDescUI(idxDesc);
+  }
 
-    eventSource.onerror = function(error) {
-        console.error("SSE 오류 발생:", error);
-        // 에러 발생 시 재연결을 시도하거나 대체 로직 수행 가능
-    };
+  // 초기 표시
+  updateChartUI(0);
+  updateDescUI(0);
+  setInterval(tickChart, 5000);
+  setInterval(tickDesc, 10000);
 </script>
 </body>
 </html>
