@@ -7,9 +7,21 @@
 <title>던져봐! 어떤 숫자가 나올까?</title>
 <style>
   @font-face {
+    font-family: 'GmarketSansMedium';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/GmarketSansMedium.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
     font-family: 'GongGothicLight';
     src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_20-10@1.0/GongGothicLight.woff') format('woff');
     font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'KBO-Dia-Gothic_bold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2304-2@1.0/KBO-Dia-Gothic_bold.woff') format('woff');
+    font-weight: 700;
     font-style: normal;
   }
   html, body {
@@ -340,9 +352,9 @@
     requestAnimationFrame(() => {
       fills.forEach(f => f.style.transition = 'height 1s ease-out');
       requestAnimationFrame(() => {
-        const max = Math.max(...heights);
+        const total = heights.reduce((a,b) => a + b, 0);
         fills.forEach((f,i) => {
-          const h = max > 0? (heights[i] / max * 100) : 0;
+          const h = total > 0? (heights[i] / total * 100) : 0;
           f.style.height = h + '%';
           f.querySelector('.percent').textContent = heights[i];
         });
@@ -351,7 +363,7 @@
 
     // 반짝 효과 (노란 막대 5)
     if (highlightTimer) clearTimeout(highlightTimer);
-    const pick = {{ latest_face }} - 1;
+    const pick = 4;
     highlightTimer = setTimeout(() => {
       bars.forEach(b => b.classList.remove('highlight'));
       bars[pick].classList.add('yellow');
