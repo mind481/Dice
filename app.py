@@ -14,10 +14,11 @@ def get_cursor(con):
     return con.cursor()
 
 def get_latest_stat(cur):
-    cur.execute("SELECT face FROM latest_roll")
+    cur.execute("SELECT face, timestamp FROM latest_roll")
     latest = cur.fetchone()
     latest_face = latest[0] if latest else "?"
-    return latest_face
+    latest_time = latest[1] if latest else "?"
+    return latest_face, latest_time
 
 def get_stats(cur, query):
     cur.execute(query)
@@ -46,7 +47,7 @@ def index():
     con = get_db()
     cur = get_cursor(con)
     # 최근값
-    latest_face = get_latest_stat(cur)
+    latest_face, _ = get_latest_stat(cur)
     daily = get_stats(cur, "SELECT face, count FROM daily_counts WHERE date = DATE('now','localtime')")
     monthly = get_stats(cur, "SELECT face, count FROM monthly_counts WHERE yyyymm = STRFTIME('%Y-%m','now','localtime')")
     total = get_stats(cur, "SELECT face, count FROM total_counts")
