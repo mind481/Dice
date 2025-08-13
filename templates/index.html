@@ -46,23 +46,20 @@
     position: relative; /* 가상요소/라벨 기준 */
   }
 
-  /* 분모 + 점선 */
+  /* 6분의 1 표시 */
   .chart::before {
-    content:"";
-    position:absolute;
-    left:20px; right:20px;
-    top:70%; /* 선의 높이 (백분율로 조절 가능) */
-    border-top:1px dashed #ffd54f; /* 색/형태 조절 */
-    pointer-events:none;
-  }
-  .chart::after {
     content:"⅙";
     position:absolute;
-    top:70%;
-    left:0px; /* 막대 영역 바깥으로 빼기 */
-    transform:translateY(-50%);
+    left:10px; right:10px;
+    top:70%; /* 선의 높이 (백분율로 조절 가능) */
+    border-top:1px dashed #ffd54f; /* 색/형태 조절 */
+    line-height: 0;
     color:#ffd54f;
     font-size:14px;
+    text-align: left;
+    transform: translateY(-50%);
+    margin-left: -10px;
+    pointer-events:none;
   }
 
   /* 막대+라벨 한 컬럼 */
