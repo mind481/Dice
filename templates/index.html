@@ -78,7 +78,7 @@
     width: var(--barW);
     height:100%;
     background: rgba(200,200,200,0.25); /* 반투명 회색 */
-    border-radius:20px; position:relative; overflow:hidden;
+    border-radius:20px; position:relative; overflow:visible;
     transition: box-shadow .3s ease;
   }
   .bar-fill{
@@ -202,7 +202,7 @@
           </div>
           <!-- 5 -->
           <div class="bar-col">
-            <div class="bar yellow">
+            <div class="bar">
               <div class="bar-fill"><div class="percent">0%</div></div>
             </div>
             <div class="bar-label">⚄</div>
@@ -357,6 +357,7 @@
     const pick = {{ latest_face }} - 1;
     highlightTimer = setTimeout(() => {
       bars.forEach(b => b.classList.remove('highlight'));
+      bars[pick].classList.add('yellow');
       bars[pick].classList.add('highlight');
     }, 1000);
   }
